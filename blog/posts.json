@@ -1,7 +1,14 @@
 [
   {
     "title": "First Post",
-    "file": "post1.html",
-    "excerpt": "Welcome to HillbillyStorytime! This is the first post."
+    "date": "2025-09-20",
+    "excerpt": "This is a preview of my first story about InfoSec adventures.",
+    "file": "post1.md"
+  },
+  {
+    "title": "Pentest Fail Story",
+    "date": "2025-09-21",
+    "excerpt": "A tale of a penetration test that went sideways and what I learned.",
+    "file": "post2.md"
   }
 ]

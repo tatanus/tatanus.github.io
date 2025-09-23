@@ -4,47 +4,26 @@
   <meta charset="UTF-8">
   <title>HillbillyStorytime - Sponsor Me</title>
   <link rel="stylesheet" href="style.css">
+  <script src="script.js" defer></script>
+<script src="https://unpkg.com/lunr/lunr.js"></script>
 </head>
 <body>
   <!-- Navbar -->
   <div id="navbar"></div>
 
   <div class="container">
-    <h1>Sponsor My Work</h1>
-    <p>
-      Here are some of the many ways you can support my projects — whether it is code development, 
-      conference presentations, YouTube videos, or HillbillyStorytime stories. Your support helps 
-      keep these going strong!
-    </p>
+    <div class="container">
+      <h1>Sponsor My Work</h1>
+      <p>Support HillbillyStorytime through any of the following platforms:</p>
 
-    <h2>GitHub Sponsors</h2>
-    <iframe src="https://github.com/sponsors/tatanus/button" 
-            title="Sponsor tatanus" 
-            height="35" 
-            width="107" 
-            style="border:0;">
-    </iframe>
+      <div class="sponsor-buttons">
+        <a class="sponsor-btn github" href="https://github.com/sponsors/tatanus" target="_blank">GitHub Sponsors</a>
+        <a class="sponsor-btn bmc" href="https://www.buymeacoffee.com/tatanus" target="_blank">Buy Me a Bourbon</a>
+        <a class="sponsor-btn ko-fi" href="https://ko-fi.com/M4M01UQWR" target="_blank">Ko-Fi</a>
+      </div>
 
-    <h2>Buy Me a Coffee (Bourbon)</h2>
-    <a class="bmc-button" target="_blank" href="https://www.buymeacoffee.com/tatanus" 
-       style="display:inline-flex;align-items:center;padding:7px 15px;background-color:#FF813F;color:#fff;
-              border-radius:5px;font-size:22px;font-family:'Cookie',cursive;text-decoration:none;">
-      <img src="https://cdn.buymeacoffee.com/buttons/bmc-new-btn-logo.svg" 
-           alt="Buy me a bourbon" 
-           style="height:34px;width:35px;margin-right:10px;border:none;box-shadow:none;">
-      Buy me a bourbon
-    </a>
-
-    <h2>Ko-Fi</h2>
-    <!-- Ko-Fi widget embed -->
-    <script type="text/javascript" src="https://ko-fi.com/widgets/widget_2.js"></script>
-    <script type="text/javascript">
-      kofiwidget2.init('Buy me a Bourbon', '#29abe0', 'M4M01UQWR');
-      kofiwidget2.draw();
-    </script>
-
-    <br><br>
-    <p><strong>Thank you!</strong> Your support means the world to me and helps keep HillbillyStorytime alive.</p>
+      <p class="thanks">Thank you for keeping HillbillyStorytime alive! 🍻</p>
+    </div>
   </div>
 </body>
 </html>
