@@ -23,18 +23,23 @@ function initScrollTop() {
   });
 }
 
-// Dark mode toggle
+// Dark mode toggle with icon switch
 function initDarkMode() {
   const toggle = document.getElementById("darkToggle");
   if (!toggle) return;
 
   if (localStorage.getItem("darkmode") === "true") {
     document.body.classList.add("dark");
+    toggle.textContent = "☀️";
+  } else {
+    toggle.textContent = "🌙";
   }
 
   toggle.addEventListener("click", () => {
-    document.body.classList.toggle("dark");
-    localStorage.setItem("darkmode", document.body.classList.contains("dark"));
+    const isDark = document.body.classList.toggle("dark");
+    localStorage.setItem("darkmode", isDark);
+    toggle.textContent = isDark ? "☀️" : "🌙";
+    setPrismTheme(isDark);
   });
 }
 
@@ -48,7 +53,6 @@ function loadNavbar() {
     .then(html => {
       navContainer.innerHTML = html;
 
-      // Highlight active page
       const current = window.location.pathname.split("/").pop() || "index.html";
       document.querySelectorAll(".navbar a").forEach(link => {
         const href = link.getAttribute("href").replace(/^\//, "");
@@ -57,7 +61,6 @@ function loadNavbar() {
         }
       });
 
-      // Init features that depend on navbar being loaded
       initNavbarToggle();
       initDarkMode();
       initSearch();
@@ -88,10 +91,10 @@ function loadBlog() {
       posts.forEach(post => {
         const div = document.createElement("div");
         div.innerHTML = `
-          <h2><a href="blog/${post.file}">${post.title}</a></h2>
+          <h2><a href="post.html?file=${post.file}">${post.title}</a></h2>
           <small>${post.date || ""}</small>
           <p>${post.excerpt || ""}</p>
-          <a href="blog/${post.file}">Read More</a>
+          <a href="post.html?file=${post.file}">Read More</a>
           <hr>
         `;
         blogContainer.appendChild(div);
@@ -103,10 +106,23 @@ function loadBlog() {
     });
 }
 
+function setPrismTheme(isDark) {
+  document.getElementById("prism-theme-light").disabled = isDark;
+  document.getElementById("prism-theme-dark").disabled = !isDark;
+}
+
+// ---- Syntax highlighting helper (Prism.js) ----
+function highlightCode(container) {
+  if (!container) return;
+  Prism.highlightAllUnder(container);
+}
+
 // Render Markdown blog post
 function renderMarkdown(file) {
   const content = document.getElementById("post-content");
   if (!content) return;
+
+  marked.setOptions({ langPrefix: "language-" });
 
   fetch(file)
     .then(r => {
@@ -115,6 +131,7 @@ function renderMarkdown(file) {
     })
     .then(md => {
       content.innerHTML = marked.parse(md);
+      highlightCode(content); // Prism.js highlights everything inside
     })
     .catch(err => {
       console.error("Failed to render markdown:", err);
@@ -145,7 +162,7 @@ function initSearch() {
 
   searchBox.addEventListener("input", () => {
     const query = searchBox.value.trim();
-    if (!idx) return; // index not ready yet
+    if (!idx) return;
 
     if (!query) {
       blogContainer.innerHTML = "";
@@ -173,8 +190,16 @@ function loadPresentations() {
   const container = document.getElementById("presentations");
   if (!container) return;
 
-  // Use raw.githubusercontent.com to fetch Markdown directly
   const readmeUrl = "https://raw.githubusercontent.com/tatanus/Presentations/main/README.md";
+
+  // Use the same safe Marked options as blog posts
+  marked.setOptions({
+    gfm: true,
+    breaks: true,
+    langPrefix: "language-",
+    mangle: false,
+    headerIds: false
+  });
 
   fetch(readmeUrl)
     .then(res => {
@@ -182,8 +207,11 @@ function loadPresentations() {
       return res.text();
     })
     .then(md => {
-      // Convert Markdown to HTML
+      // ✅ Render directly
       container.innerHTML = marked.parse(md);
+
+      // ✅ Apply Prism highlighting after rendering
+      // highlightCode(container);
     })
     .catch(err => {
       console.error("Failed to load presentations README:", err);
@@ -191,10 +219,34 @@ function loadPresentations() {
     });
 }
 
+// Load footer dynamically
+function loadFooter() {
+  const footerContainer = document.getElementById("footer");
+  if (!footerContainer) return;
+
+  fetch("/footer.html")
+    .then(res => res.text())
+    .then(html => {
+      footerContainer.innerHTML = html;
+    })
+    .catch(err => {
+      console.error("Failed to load footer:", err);
+      footerContainer.innerHTML = "<p>[Footer could not be loaded]</p>";
+    });
+}
+
 // Main
 document.addEventListener("DOMContentLoaded", () => {
   loadNavbar();
+  loadFooter();
   loadBlog();
   loadPresentations();
   initScrollTop();
+
+  // ✅ Auto-load markdown post if ?file= param exists
+  const params = new URLSearchParams(window.location.search);
+  const file = params.get("file");
+  if (file) {
+    renderMarkdown("blog/" + file);
+  }
 });

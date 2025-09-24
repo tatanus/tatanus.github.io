@@ -2,13 +2,13 @@
   {
     "title": "First Post",
     "date": "2025-09-20",
-    "excerpt": "This is a preview of my first story about InfoSec adventures.",
+    "excerpt": "Hello World",
     "file": "post1.md"
   },
   {
-    "title": "Pentest Fail Story",
-    "date": "2025-09-21",
-    "excerpt": "A tale of a penetration test that went sideways and what I learned.",
-    "file": "post2.md"
+    "title": "Sample Blog Post",
+    "date": "2025-09-24",
+    "excerpt": "This is a rich sample post showing Markdown features: text styles, lists, code, tables, and images.",
+    "file": "sample.md"
   }
 ]

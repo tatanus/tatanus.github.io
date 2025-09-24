@@ -1,24 +1,25 @@
 <!-- navbar.html -->
 <div class="navbar">
-  <div class="logo">HillbillyStorytime</div>
+  <!-- Left: Logo -->
+  <div class="navbar-left">
+    <a href="/index.html" class="logo-link">
+      <img src="/images/logo.png" alt="HillbillyStorytime" class="logo" onerror="this.style.display='none'; this.insertAdjacentHTML('afterend','<span class=\'logo-text\'>HillbillyStorytime</span>');">
+    </a>
+  </div>
 
-  <!-- Hamburger (mobile) -->
-  <div class="hamburger">☰</div>
-
-  <!-- Menu links -->
-  <div class="menu">
-    <a href="/index.html">MAIN</a>
+  <!-- Center: Menu links -->
+  <div class="navbar-center">
+    <a href="/index.html">BLOG</a>
     <a href="/development.html">DEVELOPMENT</a>
     <a href="/presentations.html">PRESENTATIONS</a>
+    <a href="/videos.html">VIDEOS</a>
     <a href="/sponsor.html">SPONSOR ME</a>
     <a href="/about.html">ABOUT ME</a>
   </div>
 
-  <!-- Right-side controls -->
-  <div class="nav-controls">
-<!--
-    <input type="text" id="searchBox" placeholder="Search blog...">
+  <!-- Right: Controls -->
+  <div class="navbar-right">
     <button id="darkToggle" title="Toggle dark mode">🌙</button>
--->
+    <input type="text" id="searchBox" placeholder="Search blog...">
   </div>
 </div>
