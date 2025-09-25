@@ -177,6 +177,28 @@ body.dark #post-content blockquote {
 .sponsor-btn.github { background: #24292f; }
 .sponsor-btn.bmc { background: #FF813F; }
 .sponsor-btn.ko-fi { background: #29abe0; }
+.sponsor-btn.liberapay { background: #f6c915; color: #222; }
+.sponsor-btn.paypal { background: #0070ba; }
+
+/* Sponsor list */
+.sponsor-list {
+  margin: 20px 0;
+  padding: 15px;
+  background: #f2f2f2;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+.sponsor-list ul {
+  list-style: none;
+  padding: 0;
+}
+.sponsor-list li {
+  margin: 8px 0;
+}
+body.dark .sponsor-list {
+  background: #1e1e1e;
+  color: #ddd;
+}
 
 /* About Me */
 .profile-pic { width: 150px; border-radius: 50%; margin-bottom: 20px; }
