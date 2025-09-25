@@ -107,13 +107,19 @@ function loadBlog() {
 }
 
 function setPrismTheme(isDark) {
-  document.getElementById("prism-theme-light").disabled = isDark;
-  document.getElementById("prism-theme-dark").disabled = !isDark;
+  const light = document.getElementById("prism-theme-light");
+  const dark = document.getElementById("prism-theme-dark");
+  if (!light || !dark) return;
+  light.disabled = isDark;
+  dark.disabled = !isDark;
 }
 
 // ---- Syntax highlighting helper (Prism.js) ----
 function highlightCode(container) {
-  if (!container) return;
+  if (!container || typeof Prism === "undefined") {
+    console.warn("Prism not ready, skipping highlight");
+    return;
+  }
   Prism.highlightAllUnder(container);
 }
 
@@ -131,7 +137,7 @@ function renderMarkdown(file) {
     })
     .then(md => {
       content.innerHTML = marked.parse(md);
-      highlightCode(content); // Prism.js highlights everything inside
+      highlightCode(content);
     })
     .catch(err => {
       console.error("Failed to render markdown:", err);
@@ -185,38 +191,161 @@ function initSearch() {
   });
 }
 
-// Load and render README.md from Presentations repo
-function loadPresentations() {
+// ---- Repo Loader with Caching ----
+async function loadGitHubRepos() {
+  const cacheKey = "reposCache";
+  const cacheTimeKey = "reposCacheTime";
+  const oneDay = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  const cached = localStorage.getItem(cacheKey);
+  const cachedTime = localStorage.getItem(cacheTimeKey);
+
+  if (cached && cachedTime && (now - cachedTime < oneDay)) {
+    console.log("Using cached repos");
+    renderRepos(JSON.parse(cached));
+    return;
+  }
+
+  try {
+    console.log("Fetching repos from GitHub...");
+    const resp = await fetch("https://api.github.com/users/tatanus/repos?per_page=100");
+    if (!resp.ok) throw new Error("GitHub API error: " + resp.status);
+    const repos = await resp.json();
+
+    localStorage.setItem(cacheKey, JSON.stringify(repos));
+    localStorage.setItem(cacheTimeKey, now);
+
+    renderRepos(repos);
+  } catch (err) {
+    console.error("Error loading repos:", err);
+    if (cached) renderRepos(JSON.parse(cached)); // fallback to stale cache
+  }
+}
+
+function renderRepos(repos) {
+  const container = document.getElementById("dynamic-repos");
+  if (!container) return;
+
+  // Clear previous
+  container.innerHTML = "";
+
+  // Blacklist of exact full_names you don't want shown
+  const blacklistFullNames = new Set([
+    "tatanus/BABYC2_dev",
+    "tatanus/beefapi",
+    "tatanus/blackhat-arsenal-tools",
+    "tatanus/metagoofil",
+    "tatanus/metasploit-framework",
+    "tatanus/tatanus.github.io",
+    "tatanus/theHarvester"
+  ]);
+
+  // Hardcoded Pinned repo names (already displayed in HTML)
+  const pinnedRepoNames = new Set([
+    "bash_style_guide",
+    "common_core",
+    "bash_setup",
+    "pentest_setup",
+    "pentest_menu",
+    "pentest_validation",
+    "scripts"
+  ]);
+
+  // Filter: only skip blacklist + pinned
+  const filtered = repos.filter(r => {
+    const full = (r.full_name || `${r.owner.login}/${r.name}`);
+    if (blacklistFullNames.has(full)) return false;
+    if (pinnedRepoNames.has(r.name)) return false;
+    return true;
+  });
+
+  // Sort by last push (code commit activity)
+  filtered.sort((a, b) => new Date(b.pushed_at) - new Date(a.pushed_at));
+  
+  // Partition into categories
+  const newish = [];
+  const old = [];
+  const unsupported = [];
+  
+  const now = new Date();
+  filtered.forEach(r => {
+    const pushed = new Date(r.pushed_at);
+    const diffDays = (now - pushed) / (1000 * 60 * 60 * 24);
+    const diffMonths = diffDays / 30; // rough month calc
+  
+    if (r.archived) {
+      unsupported.push(r);
+      return;
+    }
+  
+    if (diffMonths < 6) {
+      newish.push(r);
+    } else if (diffMonths < 12) {
+      old.push(r);
+    } else {
+      unsupported.push(r);
+    }
+  });
+
+  if (newish.length) renderRepoCategory(container, "New-ish (updated < 6 months ago)", newish);
+  if (old.length) renderRepoCategory(container, "Old (6 months – 1 year)", old);
+  if (unsupported.length) renderRepoCategory(container, "Potentially Unsupported (> 1 year or archived)", unsupported);
+}
+
+function renderRepoCategory(container, title, repos) {
+  const h = document.createElement("h3");
+  h.textContent = title;
+  container.appendChild(h);
+
+  const ul = document.createElement("ul");
+  ul.classList.add("repo-list");
+
+  repos.forEach(r => {
+    const li = document.createElement("li");
+    li.innerHTML = `<a href="${r.html_url}" target="_blank">${r.name}</a>` +
+      (r.description ? ` — ${r.description}` : "");
+    ul.appendChild(li);
+  });
+
+  container.appendChild(ul);
+}
+
+// ---- Presentations Loader with Caching ----
+async function loadPresentations() {
+  const cacheKey = "presentationsCache";
+  const cacheTimeKey = "presentationsCacheTime";
+  const oneDay = 24 * 60 * 60 * 1000;
+  const now = Date.now();
+
+  const cached = localStorage.getItem(cacheKey);
+  const cachedTime = localStorage.getItem(cacheTimeKey);
   const container = document.getElementById("presentations");
   if (!container) return;
 
-  const readmeUrl = "https://raw.githubusercontent.com/tatanus/Presentations/main/README.md";
+  if (cached && cachedTime && (now - cachedTime < oneDay)) {
+    console.log("Using cached presentations");
+    container.innerHTML = marked.parse(cached);
+    return;
+  }
 
-  // Use the same safe Marked options as blog posts
-  marked.setOptions({
-    gfm: true,
-    breaks: true,
-    langPrefix: "language-",
-    mangle: false,
-    headerIds: false
-  });
+  try {
+    const res = await fetch("https://raw.githubusercontent.com/tatanus/Presentations/main/README.md");
+    if (!res.ok) throw new Error("Failed to fetch README.md");
+    const md = await res.text();
 
-  fetch(readmeUrl)
-    .then(res => {
-      if (!res.ok) throw new Error("Failed to fetch README.md");
-      return res.text();
-    })
-    .then(md => {
-      // ✅ Render directly
-      container.innerHTML = marked.parse(md);
+    localStorage.setItem(cacheKey, md);
+    localStorage.setItem(cacheTimeKey, now);
 
-      // ✅ Apply Prism highlighting after rendering
-      // highlightCode(container);
-    })
-    .catch(err => {
-      console.error("Failed to load presentations README:", err);
+    container.innerHTML = marked.parse(md);
+  } catch (err) {
+    console.error("Failed to load presentations README:", err);
+    if (cached) {
+      container.innerHTML = marked.parse(cached);
+    } else {
       container.innerHTML = "<p>Could not load presentations.</p>";
-    });
+    }
+  }
 }
 
 // Load footer dynamically
@@ -235,15 +364,16 @@ function loadFooter() {
     });
 }
 
-// Main
+// ---- Main ----
 document.addEventListener("DOMContentLoaded", () => {
   loadNavbar();
   loadFooter();
   loadBlog();
   loadPresentations();
+  loadGitHubRepos();
   initScrollTop();
 
-  // ✅ Auto-load markdown post if ?file= param exists
+  // Auto-load markdown post if ?file= param exists
   const params = new URLSearchParams(window.location.search);
   const file = params.get("file");
   if (file) {

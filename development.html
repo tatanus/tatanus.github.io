@@ -3,10 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>HillbillyStorytime - Development</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="script.js" defer></script>
-  <script src="https://unpkg.com/lunr/lunr.js"></script>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body>
@@ -16,6 +15,8 @@
     <h1>Development Repos</h1>
     <p>Here are some of my active and maintained GitHub projects:</p>
 
+    <!-- Static hardcoded list = Recent -->
+    <h3>Pinned Repos</h3>
     <ul class="repo-list">
       <li>
         <a href="https://github.com/tatanus/bash_style_guide" target="_blank">bash_style_guide</a>  
@@ -47,11 +48,15 @@
       </li>
     </ul>
 
+    <!-- Dynamic GitHub Repos -->
+    <div id="dynamic-repos"></div>
+
     <p>
       More on <a href="https://github.com/tatanus" target="_blank">my GitHub profile</a>, 
       where you can find additional projects and contributions.
     </p>
   </div>
+
   <div id="footer"></div>
 </body>
 </html>
