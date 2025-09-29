@@ -96,6 +96,10 @@ body.dark .footer a:hover { color: #fff; }
   box-shadow: 0 2px 5px rgba(0,0,0,0.1);
   border-radius: 4px;
 }
+body.dark .container {
+  background: #1e1e1e;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
 
 /* Blog Post Content */
 #post-content h1, #post-content h2, #post-content h3 {
@@ -104,7 +108,7 @@ body.dark .footer a:hover { color: #fff; }
 }
 #post-content p { margin: 0.6em 0; }
 
-/* Inline code (just snippets inside text) */
+/* Inline code */
 #post-content p code,
 #post-content li code,
 #post-content span code {
@@ -121,7 +125,7 @@ body.dark #post-content span code {
   color: #f8f8f2;
 }
 
-/* Code blocks (Highlight.js handles colors) */
+/* Code blocks */
 #post-content pre {
   padding: 12px;
   border-radius: 6px;
@@ -130,26 +134,30 @@ body.dark #post-content span code {
   line-height: 1.4;
 }
 #post-content pre code {
-  background: none; /* leave colors to HLJS */
-  color: inherit;   /* HLJS theme applies syntax colors */
+  background: none;
+  color: inherit;
   padding: 0;
   font-family: monospace;
 }
 
 /* Tables */
-#post-content table {
+#post-content table,
+.info-table {
   border-collapse: collapse;
   margin: 1em 0;
   width: 100%;
 }
-#post-content th, #post-content td {
+#post-content th, #post-content td,
+.info-table th, .info-table td {
   border: 1px solid #ccc;
   padding: 8px 12px;
   text-align: left;
 }
 #post-content th { background: #f2f2f2; }
-body.dark #post-content th { background: #222; border-color: #555; }
-body.dark #post-content td { border-color: #555; }
+body.dark #post-content th,
+body.dark .info-table th { background: #222; border-color: #555; }
+body.dark #post-content td,
+body.dark .info-table td { border-color: #555; }
 
 /* Blockquotes */
 #post-content blockquote {
@@ -188,13 +196,8 @@ body.dark #post-content blockquote {
   border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
-.sponsor-list ul {
-  list-style: none;
-  padding: 0;
-}
-.sponsor-list li {
-  margin: 8px 0;
-}
+.sponsor-list ul { list-style: none; padding: 0; }
+.sponsor-list li { margin: 8px 0; }
 body.dark .sponsor-list {
   background: #1e1e1e;
   color: #ddd;
@@ -215,3 +218,60 @@ body.dark .sponsor-list {
 }
 .footer a { color: #aaa; text-decoration: none; margin: 0 8px; }
 .footer a:hover { color: #fff; text-decoration: underline; }
+
+/* === Visitor Info Specific === */
+.toolbar { display:flex; gap:8px; flex-wrap:wrap; margin:0 0 12px 0; align-items:center; }
+.toolbar button, .copy-btn {
+  padding:6px 12px;
+  cursor:pointer;
+  border:1px solid #888;
+  background:#f4f4f4;
+  border-radius:4px;
+}
+.toolbar button:hover, .copy-btn:hover { background:#e0e0e0; }
+body.dark .toolbar button,
+body.dark .copy-btn { background:#2a2a2a; border:1px solid #555; color:#ddd; }
+body.dark .toolbar button:hover,
+body.dark .copy-btn:hover { background:#3a3a3a; }
+
+.info-section { margin-bottom:10px; border:1px solid #ddd; border-radius:6px; overflow:hidden; }
+.info-header { background:#eee; padding:8px 12px; cursor:pointer; display:flex; justify-content:space-between; align-items:center; }
+body.dark .info-header { background:#222; }
+.info-header h2 { margin:0; font-size:1.05rem; }
+.toggle { font-size:0.9rem; color:#333; }
+body.dark .toggle { color:#bbb; }
+.copy-btn { font-size:0.8rem; padding:2px 6px; margin-left:6px; }
+
+.collapsed .info-content { display:none; }
+
+pre.raw {
+  white-space:pre-wrap;
+  word-wrap:break-word;
+  background:#f4f4f4;
+  padding:10px;
+  border-radius:4px;
+  max-height:420px;
+  overflow:auto;
+}
+body.dark pre.raw { background:#2d2d2d; color:#f8f8f2; }
+
+.note { font-size:0.95rem; color:#555; margin:8px 0 12px; }
+body.dark .note { color:#bbb; }
+.muted { color:#777; font-size:0.9rem; }
+body.dark .muted { color:#aaa; }
+
+.badge {
+  display:inline-block;
+  padding:2px 8px;
+  border:1px solid #ccc;
+  border-radius:999px;
+  font-size:0.8rem;
+  color:#555;
+}
+body.dark .badge { border-color:#555; color:#bbb; }
+
+/* Highlights */
+.highlight-timeout { color:#e74c3c; font-weight:600; }
+.highlight-unavail { color:#c0392b; }
+.highlight-empty { color:#777; }
+body.dark .highlight-empty { color:#999; }
