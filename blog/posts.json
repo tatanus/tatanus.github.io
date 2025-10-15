@@ -4,11 +4,5 @@
     "date": "2025-09-20",
     "excerpt": "Hello World",
     "file": "post1.md"
-  },
-  {
-    "title": "Sample Blog Post",
-    "date": "2025-09-24",
-    "excerpt": "This is a rich sample post showing Markdown features: text styles, lists, code, tables, and images.",
-    "file": "sample.md"
   }
 ]
