@@ -25,13 +25,17 @@
           integrity="sha384-203J0SNzyqHby3iU6hzvzltrWi/M41wOP5Gu+BiJMz5nwKykbkUx8Kp7iti0Lpli"
           crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
 </head>
 <body>
   <script>
     /* Applies the saved theme before first paint. Inline on purpose: script.js
        is deferred, so it runs after the page has already painted light. */
     (function () {
-      var dark = localStorage.getItem("darkmode") === "true";
+      var dark = false;
+      try {
+        dark = window.localStorage.getItem("darkmode") === "true";
+      } catch (e) { /* site data blocked; fall through to the light theme */ }
       if (dark) document.body.classList.add("dark");
       var light = document.getElementById("prism-theme-light"),
           night = document.getElementById("prism-theme-dark");

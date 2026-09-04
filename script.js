@@ -1,11 +1,41 @@
+// Reading or writing localStorage throws in browsers that block site data
+// (strict privacy modes, some enterprise policies). Unguarded, that throw
+// escaped initDarkMode into loadNavbar's .catch, which replaced the whole
+// navigation with "[Navigation could not be loaded]" and skipped initSearch.
+const storage = {
+  get(key) {
+    try {
+      return window.localStorage.getItem(key);
+    } catch (err) {
+      return null;
+    }
+  },
+  set(key, value) {
+    try {
+      window.localStorage.setItem(key, value);
+      return true;
+    } catch (err) {
+      return false;
+    }
+  }
+};
+
 // Scroll-to-top button
 function initScrollTop() {
   const btn = document.getElementById("scrollTop");
   if (!btn) return;
 
+  // Passive: this listener never calls preventDefault, and marking it so keeps
+  // it off the scrolling critical path. Only touch the style when the state
+  // actually changes rather than on every scroll event.
+  let shown = false;
   window.addEventListener("scroll", () => {
-    btn.style.display = window.scrollY > 200 ? "block" : "none";
-  });
+    const shouldShow = window.scrollY > 200;
+    if (shouldShow !== shown) {
+      shown = shouldShow;
+      btn.style.display = shouldShow ? "block" : "none";
+    }
+  }, { passive: true });
 
   btn.addEventListener("click", () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -17,7 +47,7 @@ function initDarkMode() {
   const toggle = document.getElementById("darkToggle");
   if (!toggle) return;
 
-  const startDark = localStorage.getItem("darkmode") === "true";
+  const startDark = storage.get("darkmode") === "true";
   document.body.classList.toggle("dark", startDark);
   toggle.textContent = startDark ? "☀️" : "🌙";
   toggle.setAttribute("aria-pressed", String(startDark));
@@ -27,7 +57,7 @@ function initDarkMode() {
 
   toggle.addEventListener("click", () => {
     const isDark = document.body.classList.toggle("dark");
-    localStorage.setItem("darkmode", isDark);
+    storage.set("darkmode", isDark);
     toggle.textContent = isDark ? "☀️" : "🌙";
     toggle.setAttribute("aria-pressed", String(isDark));
     setPrismTheme(isDark);
@@ -121,7 +151,12 @@ function renderPostSummary(post) {
   heading.appendChild(titleLink);
 
   const date = document.createElement("small");
-  date.textContent = post.date || "";
+  if (post.date) {
+    const stamp = document.createElement("time");
+    stamp.setAttribute("datetime", post.date);
+    stamp.textContent = post.date;
+    date.appendChild(stamp);
+  }
 
   const excerpt = document.createElement("p");
   excerpt.textContent = post.excerpt || "";
@@ -282,8 +317,8 @@ async function loadGitHubRepos() {
   const oneDay = 24 * 60 * 60 * 1000;
   const now = Date.now();
 
-  const cached = localStorage.getItem(cacheKey);
-  const cachedTime = localStorage.getItem(cacheTimeKey);
+  const cached = storage.get(cacheKey);
+  const cachedTime = storage.get(cacheTimeKey);
 
   if (cached && cachedTime && (now - cachedTime < oneDay)) {
     console.log("Using cached repos");
@@ -297,8 +332,8 @@ async function loadGitHubRepos() {
     if (!resp.ok) throw new Error("GitHub API error: " + resp.status);
     const repos = await resp.json();
 
-    localStorage.setItem(cacheKey, JSON.stringify(repos));
-    localStorage.setItem(cacheTimeKey, now);
+    storage.set(cacheKey, JSON.stringify(repos));
+    storage.set(cacheTimeKey, now);
 
     renderRepos(repos);
   } catch (err) {
@@ -409,8 +444,8 @@ async function loadPresentations() {
   const oneDay = 24 * 60 * 60 * 1000;
   const now = Date.now();
 
-  const cached = localStorage.getItem(cacheKey);
-  const cachedTime = localStorage.getItem(cacheTimeKey);
+  const cached = storage.get(cacheKey);
+  const cachedTime = storage.get(cacheTimeKey);
   const container = document.getElementById("presentations");
   if (!container) return;
 
@@ -425,8 +460,8 @@ async function loadPresentations() {
     if (!res.ok) throw new Error("Failed to fetch README.md");
     const md = await res.text();
 
-    localStorage.setItem(cacheKey, md);
-    localStorage.setItem(cacheTimeKey, now);
+    storage.set(cacheKey, md);
+    storage.set(cacheTimeKey, now);
 
     renderPresentations(container, md);
   } catch (err) {

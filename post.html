@@ -45,9 +45,6 @@
   <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-python.min.js"
           integrity="sha384-WJdEkJKrbsqw0evQ4GB6mlsKe5cGTxBOw4KAEIa52ZLB7DDpliGkwdme/HMa5n1m"
           crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-markup.min.js"
-          integrity="sha384-HkMr0bZB9kBW4iVtXn6nd35kO/L/dQtkkUBkL9swzTEDMdIe5ExJChVDSnC79aNA"
-          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <!-- Site Script -->
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.4.14/dist/purify.min.js"
@@ -56,13 +53,17 @@
   <script src="script.js" defer></script>
 
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon.png">
 </head>
 <body>
   <script>
     /* Applies the saved theme before first paint. Inline on purpose: script.js
        is deferred, so it runs after the page has already painted light. */
     (function () {
-      var dark = localStorage.getItem("darkmode") === "true";
+      var dark = false;
+      try {
+        dark = window.localStorage.getItem("darkmode") === "true";
+      } catch (e) { /* site data blocked; fall through to the light theme */ }
       if (dark) document.body.classList.add("dark");
       var light = document.getElementById("prism-theme-light"),
           night = document.getElementById("prism-theme-dark");

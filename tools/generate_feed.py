@@ -78,9 +78,22 @@ def main():
     (ROOT / "feed.xml").write_text(feed)
 
     # ---- sitemap.xml ----
-    urls = [f"{SITE}/{page}" for page in PAGES] + [post_url(p) for p in posts]
+    # lastmod is emitted only where a real date exists: each post carries its
+    # own, and the blog index tracks the newest post. Static pages have no
+    # trustworthy date, and lastmod is optional per the sitemap spec.
+    newest = posts[0].get("date") if posts else None
+    entries = []
+    for page in PAGES:
+        stamp = newest if page == "index.html" else None
+        entries.append((f"{SITE}/{page}", stamp))
+    entries += [(post_url(p), p.get("date")) for p in posts]
+
+    urls = [u for u, _ in entries]
     body = "\n".join(
-        f"  <url><loc>{escape(u)}</loc></url>" for u in urls
+        f"  <url><loc>{escape(u)}</loc>"
+        + (f"<lastmod>{escape(d)}</lastmod>" if d else "")
+        + "</url>"
+        for u, d in entries
     )
     sitemap = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
