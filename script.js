@@ -28,12 +28,12 @@ function initDarkMode() {
   const toggle = document.getElementById("darkToggle");
   if (!toggle) return;
 
-  if (localStorage.getItem("darkmode") === "true") {
-    document.body.classList.add("dark");
-    toggle.textContent = "☀️";
-  } else {
-    toggle.textContent = "🌙";
-  }
+  const startDark = localStorage.getItem("darkmode") === "true";
+  document.body.classList.toggle("dark", startDark);
+  toggle.textContent = startDark ? "☀️" : "🌙";
+  // Keep the Prism stylesheet in step with the restored theme, otherwise a
+  // saved dark preference renders code blocks with the light theme.
+  setPrismTheme(startDark);
 
   toggle.addEventListener("click", () => {
     const isDark = document.body.classList.toggle("dark");
@@ -71,6 +71,33 @@ function loadNavbar() {
     });
 }
 
+// Shared post-summary markup. The blog listing and the search results used to
+// build this separately and had drifted: search linked straight at the raw .md
+// file instead of the post viewer.
+function renderPostSummary(post) {
+  const wrapper = document.createElement("div");
+  const href = "post.html?file=" + encodeURIComponent(post.file);
+
+  const heading = document.createElement("h2");
+  const titleLink = document.createElement("a");
+  titleLink.href = href;
+  titleLink.textContent = post.title || post.file;
+  heading.appendChild(titleLink);
+
+  const date = document.createElement("small");
+  date.textContent = post.date || "";
+
+  const excerpt = document.createElement("p");
+  excerpt.textContent = post.excerpt || "";
+
+  const more = document.createElement("a");
+  more.href = href;
+  more.textContent = "Read More";
+
+  wrapper.append(heading, date, excerpt, more, document.createElement("hr"));
+  return wrapper;
+}
+
 // Blog loader with Markdown rendering
 function loadBlog() {
   const blogContainer = document.getElementById("blog-entries");
@@ -88,17 +115,7 @@ function loadBlog() {
         blogContainer.innerHTML = "<p>No posts available.</p>";
         return;
       }
-      posts.forEach(post => {
-        const div = document.createElement("div");
-        div.innerHTML = `
-          <h2><a href="post.html?file=${post.file}">${post.title}</a></h2>
-          <small>${post.date || ""}</small>
-          <p>${post.excerpt || ""}</p>
-          <a href="post.html?file=${post.file}">Read More</a>
-          <hr>
-        `;
-        blogContainer.appendChild(div);
-      });
+      posts.forEach(post => blogContainer.appendChild(renderPostSummary(post)));
     })
     .catch(err => {
       console.error("Failed to load blog:", err);
@@ -148,8 +165,15 @@ function renderMarkdown(file) {
 // Blog search with Lunr.js
 function initSearch() {
   const searchBox = document.getElementById("searchBox");
+  if (!searchBox) return;
+
   const blogContainer = document.getElementById("blog-entries");
-  if (!searchBox || !blogContainer) return;
+  if (!blogContainer) {
+    // The navbar is shared, but search only has anything to search on the blog
+    // index. Hide the input rather than leaving a dead control on every page.
+    searchBox.hidden = true;
+    return;
+  }
 
   let idx, posts = [];
 
@@ -177,22 +201,23 @@ function initSearch() {
     }
     const results = idx.search(query);
     blogContainer.innerHTML = "";
+    if (!results.length) {
+      blogContainer.innerHTML = "<p>No posts match that search.</p>";
+      return;
+    }
     results.forEach(r => {
       const post = posts.find(p => p.file === r.ref);
-      if (post) {
-        blogContainer.innerHTML += `
-          <h2><a href="blog/${post.file}">${post.title}</a></h2>
-          <small>${post.date}</small>
-          <p>${post.excerpt}</p>
-          <hr>
-        `;
-      }
+      if (post) blogContainer.appendChild(renderPostSummary(post));
     });
   });
 }
 
 // ---- Repo Loader with Caching ----
 async function loadGitHubRepos() {
+  // Only the development page renders repos. Bail out before spending one of
+  // the 60 unauthenticated GitHub API calls per hour on every other page.
+  if (!document.getElementById("dynamic-repos")) return;
+
   const cacheKey = "reposCache";
   const cacheTimeKey = "reposCacheTime";
   const oneDay = 24 * 60 * 60 * 1000;
@@ -357,6 +382,9 @@ function loadFooter() {
     .then(res => res.text())
     .then(html => {
       footerContainer.innerHTML = html;
+
+      const year = footerContainer.querySelector("#copyright-year");
+      if (year) year.textContent = new Date().getFullYear();
     })
     .catch(err => {
       console.error("Failed to load footer:", err);

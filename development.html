@@ -9,6 +9,17 @@
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body>
+  <script>
+    /* Applies the saved theme before first paint. Inline on purpose: script.js
+       is deferred, so it runs after the page has already painted light. */
+    (function () {
+      var dark = localStorage.getItem("darkmode") === "true";
+      if (dark) document.body.classList.add("dark");
+      var light = document.getElementById("prism-theme-light"),
+          night = document.getElementById("prism-theme-dark");
+      if (light && night) { light.disabled = dark; night.disabled = !dark; }
+    })();
+  </script>
   <div id="navbar"></div>
 
   <div class="container">

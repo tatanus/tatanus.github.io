@@ -8,6 +8,16 @@ body {
 }
 
 /* Navbar (grid layout: left | center | right) */
+/* The #navbar wrapper carries the sticky positioning: a sticky element only
+   sticks within its parent's box, so putting it on .navbar (whose parent is
+   exactly navbar-height tall) would have no effect. Sticky also keeps the bar
+   in normal flow, so it reserves its own space and never overlaps .container
+   no matter how tall it grows on narrow screens. */
+#navbar {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+}
 .navbar {
   display: grid;
   grid-template-columns: auto 1fr auto;
@@ -15,10 +25,7 @@ body {
   background: #222;
   color: #fff;
   padding: 10px 30px;
-  position: fixed;
-  top: 0;
   width: 100%;
-  z-index: 1000;
   box-sizing: border-box;
 }
 .navbar-left { justify-self: start; }
@@ -55,9 +62,12 @@ body {
 #darkToggle:hover { background: #333; }
 
 @media (max-width: 768px) {
-  .navbar { grid-template-columns: 1fr; gap: 10px; text-align: center; }
-  .navbar-center { flex-direction: column; gap: 10px; }
+  /* A stacked navbar is far too tall to pin to the viewport, so let it scroll. */
+  #navbar { position: static; }
+  .navbar { grid-template-columns: 1fr; gap: 10px; text-align: center; padding: 10px 15px; }
+  .navbar-center { flex-wrap: wrap; justify-content: center; gap: 8px 12px; }
   .navbar-right { justify-content: center; }
+  #searchBox { max-width: 100%; flex: 1 1 auto; }
 }
 
 /* Scroll to Top */
@@ -89,7 +99,7 @@ body.dark .footer a:hover { color: #fff; }
 
 /* Main Content */
 .container {
-  padding: 80px 20px;
+  padding: 40px 20px;
   max-width: 800px;
   margin: auto;
   background: #fff;

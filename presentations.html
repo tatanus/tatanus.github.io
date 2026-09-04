@@ -2,14 +2,27 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HillbillyStorytime - Presentations</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"
+          integrity="sha384-948ahk4ZmxYVYOc+rxN1H2gM1EJ2Duhp7uHtZ4WSLkV4Vtx5MUqnV+l7u9B+jFv+"
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
   <script src="script.js" defer></script>
-  <script src="https://unpkg.com/lunr/lunr.js"></script>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body>
+  <script>
+    /* Applies the saved theme before first paint. Inline on purpose: script.js
+       is deferred, so it runs after the page has already painted light. */
+    (function () {
+      var dark = localStorage.getItem("darkmode") === "true";
+      if (dark) document.body.classList.add("dark");
+      var light = document.getElementById("prism-theme-light"),
+          night = document.getElementById("prism-theme-dark");
+      if (light && night) { light.disabled = dark; night.disabled = !dark; }
+    })();
+  </script>
   <!-- Navbar placeholder (loaded via script.js) -->
   <div id="navbar"></div>
 

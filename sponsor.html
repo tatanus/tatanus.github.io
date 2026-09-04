@@ -2,14 +2,24 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>HillbillyStorytime - Sponsor Me</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="script.js" defer></script>
-  <script src="https://unpkg.com/lunr/lunr.js"></script>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body>
+  <script>
+    /* Applies the saved theme before first paint. Inline on purpose: script.js
+       is deferred, so it runs after the page has already painted light. */
+    (function () {
+      var dark = localStorage.getItem("darkmode") === "true";
+      if (dark) document.body.classList.add("dark");
+      var light = document.getElementById("prism-theme-light"),
+          night = document.getElementById("prism-theme-dark");
+      if (light && night) { light.disabled = dark; night.disabled = !dark; }
+    })();
+  </script>
   <!-- Navbar -->
   <div id="navbar"></div>
 
@@ -32,18 +42,6 @@
       <a class="sponsor-btn liberapay" href="https://liberapay.com/adam.compton" target="_blank">Liberapay</a>
     </div>
 
-    <!-- Current Sponsors -->
-<!--
-    <h2>⭐ Current Sponsors</h2>
-    <div class="sponsor-list">
-      <p>Special thanks to those keeping HillbillyStorytime alive!</p>
-      <ul>
-        <li><strong>Amazing Sponsor #1</strong> — GitHub Sponsor</li>
-        <li><strong>Awesome Donor #2</strong> — Buy Me a Coffee</li>
-        <li><strong>Great Supporter #3</strong> — Patreon</li>
-      </ul>
-    </div>
--->
     <p class="thanks">Every bit of support means the world — thank you! 🍻</p>
   </div>
 

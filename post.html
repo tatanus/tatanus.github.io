@@ -9,21 +9,46 @@
   <link rel="stylesheet" href="style.css">
 
   <!-- Markdown Parser -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked@15.0.12/marked.min.js"
+          integrity="sha384-948ahk4ZmxYVYOc+rxN1H2gM1EJ2Duhp7uHtZ4WSLkV4Vtx5MUqnV+l7u9B+jFv+"
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <!-- Prism.js (syntax highlighting) -->
-  <link id="prism-theme-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.css">
-  <link id="prism-theme-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism-tomorrow.css" disabled>
+  <link id="prism-theme-light" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/themes/prism.css"
+        integrity="sha384-fOxUs50supO02q0/iotANfwsR12+8Cf4xzduhJwMRT7de7W6RoTkt6OQa9iv0OaA"
+        crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link id="prism-theme-dark" rel="stylesheet" href="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/themes/prism-tomorrow.css"
+        integrity="sha384-RCpAEDK2BSI4uVvV9kefzLdwlNUNZkCZJdOE2LkEa3jtLRcv2YrEVSbM4vwbCCW2"
+        crossorigin="anonymous" referrerpolicy="no-referrer" disabled>
 
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-bash.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-python.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-markup.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/prism.js"
+          integrity="sha384-IfXV8q9IOAE+W1GXzqnINhrSCZlBZr69tB8V4IEhv9CCAzJ3eL+4UpAuHk30yRx8"
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-bash.min.js"
+          integrity="sha384-9WmlN8ABpoFSSHvBGGjhvB3E/D8UkNB9HpLJjBQFC2VSQsM1odiQDv4NbEo+7l15"
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-python.min.js"
+          integrity="sha384-WJdEkJKrbsqw0evQ4GB6mlsKe5cGTxBOw4KAEIa52ZLB7DDpliGkwdme/HMa5n1m"
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.30.0/components/prism-markup.min.js"
+          integrity="sha384-HkMr0bZB9kBW4iVtXn6nd35kO/L/dQtkkUBkL9swzTEDMdIe5ExJChVDSnC79aNA"
+          crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
   <!-- Site Script -->
   <script src="script.js" defer></script>
 </head>
 <body>
+  <script>
+    /* Applies the saved theme before first paint. Inline on purpose: script.js
+       is deferred, so it runs after the page has already painted light. */
+    (function () {
+      var dark = localStorage.getItem("darkmode") === "true";
+      if (dark) document.body.classList.add("dark");
+      var light = document.getElementById("prism-theme-light"),
+          night = document.getElementById("prism-theme-dark");
+      if (light && night) { light.disabled = dark; night.disabled = !dark; }
+    })();
+  </script>
   <!-- Navbar (loaded dynamically) -->
   <div id="navbar"></div>
 

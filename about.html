@@ -2,20 +2,33 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>HillbillyStorytime - Development</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HillbillyStorytime - About Me</title>
   <link rel="stylesheet" href="style.css">
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="script.js" defer></script>
-  <script src="https://unpkg.com/lunr/lunr.js"></script>
   <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body>
+  <script>
+    /* Applies the saved theme before first paint. Inline on purpose: script.js
+       is deferred, so it runs after the page has already painted light. */
+    (function () {
+      var dark = localStorage.getItem("darkmode") === "true";
+      if (dark) document.body.classList.add("dark");
+      var light = document.getElementById("prism-theme-light"),
+          night = document.getElementById("prism-theme-dark");
+      if (light && night) { light.disabled = dark; night.disabled = !dark; }
+    })();
+  </script>
   <div id="navbar"></div>
 
   <div class="container">
     <h1>About Me</h1>
 
-    <img src="images/profile.png" alt="Adam Compton" class="profile-pic">
+    <picture>
+      <source srcset="images/profile.webp" type="image/webp">
+      <img src="images/profile.png" alt="Adam Compton" class="profile-pic" loading="lazy" decoding="async">
+    </picture>
 
     <p>
       Hi, I am <strong>Adam Compton</strong>, a Principal Security Consultant with more than 
@@ -32,13 +45,13 @@
     <h2>Professional Journey</h2>
     <p>
       My career started in the mid-1990s, long before “cybersecurity” was a household word.  
-      Over the years, I have worked across industries including government, small independant companies, 
+      Over the years, I have worked across industries including government, small independent companies, 
       education, and Fortune 500 enterprises. I am currently employed as a penetration tester 
       at <strong>TrustedSec</strong>, where I lead engagements that range from network penetration 
       tests to physical and social engineering exercises.
     </p>
 
-    <h2>Career Timeline Sumamry</h2>
+    <h2>Career Timeline Summary</h2>
     <ul class="timeline">
       <li><strong>1981:</strong> First exposure to a home computer and programming (Basic).</li>
       <li><strong>1995:</strong> First exposure to InfoSec, starting with network defense and system administration.</li>
