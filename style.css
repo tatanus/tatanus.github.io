@@ -240,7 +240,9 @@ body.dark .sponsor-list {
 }
 
 /* About Me */
-.profile-pic { width: 150px; border-radius: 50%; margin-bottom: 20px; }
+/* height:auto is required alongside the img width/height attributes: without
+   it the height="300" attribute wins and the avatar renders 150x300. */
+.profile-pic { width: 150px; height: auto; border-radius: 50%; margin-bottom: 20px; }
 .timeline { list-style: none; padding-left: 0; }
 .timeline li { margin: 10px 0; }
 
