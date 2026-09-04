@@ -122,6 +122,12 @@ body.dark #searchBox { background: #222; color: #ddd; border: 1px solid #555; }
 body.dark .footer { background: #111; color: #ddd; }
 body.dark .footer a { color: #bbb; }
 body.dark .footer a:hover { color: #fff; }
+/* Content links: without these, links inside .container fall back to the UA
+   default blue (#0000EE), which is 1.77:1 on #1e1e1e. These measure 8.57:1
+   and 8.27:1. */
+body.dark .container a:not(.sponsor-btn) { color: #79c0ff; }
+body.dark .container a:not(.sponsor-btn):visited { color: #c9a9f0; }
+body.dark .container a:not(.sponsor-btn):hover { color: #9ecfff; }
 
 /* Main Content */
 .container {
@@ -219,8 +225,8 @@ body.dark #post-content blockquote {
   text-decoration: none;
 }
 .sponsor-btn.github { background: #24292f; }
-.sponsor-btn.bmc { background: #FF813F; }
-.sponsor-btn.ko-fi { background: #29abe0; }
+.sponsor-btn.bmc { background: #FF813F; color: #222; }
+.sponsor-btn.ko-fi { background: #29abe0; color: #222; }
 .sponsor-btn.liberapay { background: #f6c915; color: #222; }
 .sponsor-btn.paypal { background: #0070ba; }
 

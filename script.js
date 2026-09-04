@@ -49,6 +49,7 @@ function loadNavbar() {
         const href = link.getAttribute("href").replace(/^\//, "");
         if (href === current) {
           link.classList.add("active");
+          link.setAttribute("aria-current", "page");
         }
       });
 
@@ -59,6 +60,51 @@ function loadNavbar() {
       console.error("Failed to load navbar:", err);
       navContainer.innerHTML = "<p>[Navigation could not be loaded]</p>";
     });
+}
+
+// posts.json used to be fetched by loadBlog, again by initSearch, and again on
+// every search clear. Fetch it once, share the promise, and sort here so the
+// listing and the search agree on order.
+let postsPromise = null;
+function getPosts() {
+  if (!postsPromise) {
+    postsPromise = fetch("blog/posts.json")
+      .then(r => {
+        if (!r.ok) throw new Error("Failed to fetch posts.json");
+        return r.json();
+      })
+      .then(posts => {
+        if (!Array.isArray(posts)) return [];
+        // Newest first; undated entries sort last rather than throwing.
+        return posts.slice().sort((a, b) =>
+          String(b.date || "").localeCompare(String(a.date || "")));
+      });
+  }
+  return postsPromise;
+}
+
+// Markdown is rendered into innerHTML and marked does not sanitise. Post files
+// live in this repo and carry the same trust as script.js itself, so they
+// render even without the sanitiser; the presentations README is fetched
+// cross-origin, so that path refuses to render unsanitised.
+function sanitizeMarkdown(html, requireSanitizer) {
+  if (typeof DOMPurify !== "undefined") return DOMPurify.sanitize(html);
+  if (requireSanitizer) return null;
+  console.warn("DOMPurify unavailable; rendering first-party Markdown unsanitised");
+  return html;
+}
+
+// The page supplies its own <h1>, so remote Markdown that opens with one would
+// give the document two top-level headings. Shift everything down a level.
+function demoteHeadings(container) {
+  for (let level = 5; level >= 1; level--) {
+    container.querySelectorAll("h" + level).forEach(el => {
+      const repl = document.createElement("h" + (level + 1));
+      repl.innerHTML = el.innerHTML;
+      Array.from(el.attributes).forEach(a => repl.setAttribute(a.name, a.value));
+      el.replaceWith(repl);
+    });
+  }
 }
 
 // Shared post-summary markup. The blog listing and the search results used to
@@ -95,13 +141,9 @@ function loadBlog() {
 
   blogContainer.innerHTML = "";
 
-  fetch("blog/posts.json")
-    .then(r => {
-      if (!r.ok) throw new Error("Failed to fetch posts.json");
-      return r.json();
-    })
+  getPosts()
     .then(posts => {
-      if (!Array.isArray(posts) || posts.length === 0) {
+      if (!posts.length) {
         blogContainer.innerHTML = "<p>No posts available.</p>";
         return;
       }
@@ -130,6 +172,27 @@ function highlightCode(container) {
   Prism.highlightAllUnder(container);
 }
 
+// Every post shared one generic <title> and no description, so links to
+// individual posts were indistinguishable when shared. Fill both in from the
+// posts.json entry once we know which post this is.
+function applyPostMetadata(post) {
+  const url = location.origin + "/post.html?file=" + encodeURIComponent(post.file);
+  document.title = post.title + " — HillbillyStorytime";
+
+  const set = (selector, attr, value) => {
+    const el = document.querySelector(selector);
+    if (el) el.setAttribute(attr, value);
+  };
+  const desc = post.excerpt || "";
+  set('meta[name="description"]', "content", desc);
+  set('meta[property="og:title"]', "content", post.title);
+  set('meta[property="og:description"]', "content", desc);
+  set('meta[property="og:url"]', "content", url);
+  set('meta[name="twitter:title"]', "content", post.title);
+  set('meta[name="twitter:description"]', "content", desc);
+  set('link[rel="canonical"]', "href", url);
+}
+
 // Render Markdown blog post
 function renderMarkdown(file) {
   const content = document.getElementById("post-content");
@@ -137,14 +200,21 @@ function renderMarkdown(file) {
 
   marked.setOptions({ langPrefix: "language-" });
 
-  fetch(file)
-    .then(r => {
-      if (!r.ok) throw new Error("Failed to fetch " + file);
-      return r.text();
+  getPosts()
+    .then(posts => {
+      // Only render files listed in posts.json. Without this, ?file= will
+      // fetch and render any same-origin path the caller names.
+      const post = posts.find(p => p.file === file);
+      if (!post) throw new Error("Unknown post: " + file);
+      return fetch("blog/" + post.file).then(r => {
+        if (!r.ok) throw new Error("Failed to fetch " + post.file);
+        return r.text().then(md => ({ md, post }));
+      });
     })
-    .then(md => {
-      content.innerHTML = marked.parse(md);
+    .then(({ md, post }) => {
+      content.innerHTML = sanitizeMarkdown(marked.parse(md), false);
       highlightCode(content);
+      applyPostMetadata(post);
     })
     .catch(err => {
       console.error("Failed to render markdown:", err);
@@ -167,8 +237,7 @@ function initSearch() {
 
   let idx, posts = [];
 
-  fetch("blog/posts.json")
-    .then(r => r.json())
+  getPosts()
     .then(data => {
       posts = data;
       idx = lunr(function () {
@@ -256,16 +325,14 @@ function renderRepos(repos) {
     "tatanus/theHarvester"
   ]);
 
-  // Hardcoded Pinned repo names (already displayed in HTML)
-  const pinnedRepoNames = new Set([
-    "bash_style_guide",
-    "common_core",
-    "bash_setup",
-    "pentest_setup",
-    "pentest_menu",
-    "pentest_validation",
-    "scripts"
-  ]);
+  // Derived from the static markup rather than duplicated here, so adding or
+  // renaming a pinned repo in the HTML can no longer make it appear twice.
+  const pinnedRepoNames = new Set(
+    Array.from(document.querySelectorAll(".repo-list a"))
+      .filter(a => !container.contains(a))
+      .map(a => (a.getAttribute("href") || "").replace(/\/+$/, "").split("/").pop())
+      .filter(Boolean)
+  );
 
   // Filter: only skip blacklist + pinned
   const filtered = repos.filter(r => {
@@ -309,7 +376,8 @@ function renderRepos(repos) {
 }
 
 function renderRepoCategory(container, title, repos) {
-  const h = document.createElement("h3");
+  // h2, matching "Pinned Repos" — the page previously jumped h1 -> h3.
+  const h = document.createElement("h2");
   h.textContent = title;
   container.appendChild(h);
 
@@ -317,9 +385,17 @@ function renderRepoCategory(container, title, repos) {
   ul.classList.add("repo-list");
 
   repos.forEach(r => {
+    // Built as DOM nodes rather than innerHTML: the name and description come
+    // from the GitHub API, and these links also need the same rel as the
+    // static ones.
     const li = document.createElement("li");
-    li.innerHTML = `<a href="${r.html_url}" target="_blank">${r.name}</a>` +
-      (r.description ? ` — ${r.description}` : "");
+    const a = document.createElement("a");
+    a.href = r.html_url;
+    a.target = "_blank";
+    a.rel = "noopener noreferrer";
+    a.textContent = r.name;
+    li.appendChild(a);
+    if (r.description) li.appendChild(document.createTextNode(" — " + r.description));
     ul.appendChild(li);
   });
 
@@ -340,7 +416,7 @@ async function loadPresentations() {
 
   if (cached && cachedTime && (now - cachedTime < oneDay)) {
     console.log("Using cached presentations");
-    container.innerHTML = marked.parse(cached);
+    renderPresentations(container, cached);
     return;
   }
 
@@ -352,15 +428,27 @@ async function loadPresentations() {
     localStorage.setItem(cacheKey, md);
     localStorage.setItem(cacheTimeKey, now);
 
-    container.innerHTML = marked.parse(md);
+    renderPresentations(container, md);
   } catch (err) {
     console.error("Failed to load presentations README:", err);
     if (cached) {
-      container.innerHTML = marked.parse(cached);
+      renderPresentations(container, cached);
     } else {
       container.innerHTML = "<p>Could not load presentations.</p>";
     }
   }
+}
+
+// This Markdown is fetched cross-origin from raw.githubusercontent.com, so it
+// is rendered only through the sanitiser.
+function renderPresentations(container, md) {
+  const safe = sanitizeMarkdown(marked.parse(md), true);
+  if (safe === null) {
+    container.innerHTML = "<p>Could not render presentations (sanitizer unavailable).</p>";
+    return;
+  }
+  container.innerHTML = safe;
+  demoteHeadings(container);
 }
 
 // Load footer dynamically
@@ -395,6 +483,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const params = new URLSearchParams(window.location.search);
   const file = params.get("file");
   if (file) {
-    renderMarkdown("blog/" + file);
+    renderMarkdown(file);
   }
 });

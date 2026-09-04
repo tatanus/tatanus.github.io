@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>HillbillyStorytime</title>
+    <link>https://hillbillystorytime.com/</link>
+    <description>Penetration testing, security automation, and Appalachian storytelling from Adam Compton.</description>
+    <language>en-us</language>
+    <lastBuildDate>Sat, 20 Sep 2025 00:00:00 +0000</lastBuildDate>
+    <atom:link href="https://hillbillystorytime.com/feed.xml" rel="self" type="application/rss+xml"/>
+    <item>
+      <title>First Post</title>
+      <link>https://hillbillystorytime.com/post.html?file=post1.md</link>
+      <guid isPermaLink="true">https://hillbillystorytime.com/post.html?file=post1.md</guid>
+      <pubDate>Sat, 20 Sep 2025 00:00:00 +0000</pubDate>
+      <description>Hello World</description>
+    </item>
+  </channel>
+</rss>
