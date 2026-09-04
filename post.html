@@ -36,6 +36,8 @@
 
   <!-- Site Script -->
   <script src="script.js" defer></script>
+
+  <link rel="icon" type="image/x-icon" href="/favicon.ico">
 </head>
 <body>
   <script>
@@ -49,13 +51,14 @@
       if (light && night) { light.disabled = dark; night.disabled = !dark; }
     })();
   </script>
+  <a class="skip-link" href="#main">Skip to content</a>
   <!-- Navbar (loaded dynamically) -->
   <div id="navbar"></div>
 
   <!-- Blog Post Container -->
-  <div class="container">
+  <main class="container" id="main">
     <div id="post-content"></div>
-  </div>
+  </main>
 
   <!-- Footer (loaded dynamically) -->
   <div id="footer"></div>

@@ -1,14 +1,3 @@
-// Responsive Navbar (Hamburger toggle)
-function initNavbarToggle() {
-  const hamburger = document.querySelector(".hamburger");
-  const menu = document.querySelector(".menu");
-  if (!hamburger || !menu) return;
-
-  hamburger.addEventListener("click", () => {
-    menu.classList.toggle("show");
-  });
-}
-
 // Scroll-to-top button
 function initScrollTop() {
   const btn = document.getElementById("scrollTop");
@@ -31,6 +20,7 @@ function initDarkMode() {
   const startDark = localStorage.getItem("darkmode") === "true";
   document.body.classList.toggle("dark", startDark);
   toggle.textContent = startDark ? "☀️" : "🌙";
+  toggle.setAttribute("aria-pressed", String(startDark));
   // Keep the Prism stylesheet in step with the restored theme, otherwise a
   // saved dark preference renders code blocks with the light theme.
   setPrismTheme(startDark);
@@ -39,6 +29,7 @@ function initDarkMode() {
     const isDark = document.body.classList.toggle("dark");
     localStorage.setItem("darkmode", isDark);
     toggle.textContent = isDark ? "☀️" : "🌙";
+    toggle.setAttribute("aria-pressed", String(isDark));
     setPrismTheme(isDark);
   });
 }
@@ -61,7 +52,6 @@ function loadNavbar() {
         }
       });
 
-      initNavbarToggle();
       initDarkMode();
       initSearch();
     })

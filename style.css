@@ -70,6 +70,33 @@ body {
   #searchBox { max-width: 100%; flex: 1 1 auto; }
 }
 
+/* Skip link: off-screen until keyboard focus, then pinned to the top-left. */
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 1100;
+  padding: 10px 16px;
+  background: #222;
+  color: #fff;
+  text-decoration: none;
+  border-radius: 0 0 4px 0;
+}
+.skip-link:focus {
+  left: 0;
+}
+body.dark .skip-link { background: #111; color: #fff; outline: 2px solid #888; }
+
+/* Keep focus visible on the navbar controls for keyboard users. */
+.navbar-center a:focus-visible,
+#darkToggle:focus-visible,
+#searchBox:focus-visible,
+#scrollTop:focus-visible,
+.skip-link:focus-visible {
+  outline: 2px solid #6cb6ff;
+  outline-offset: 2px;
+}
+
 /* Scroll to Top */
 #scrollTop {
   position: fixed;
@@ -92,7 +119,6 @@ body.dark .navbar { background: #111; }
 body.dark .navbar-center a { color: #ddd; }
 body.dark .navbar-center a:hover { background: #222; }
 body.dark #searchBox { background: #222; color: #ddd; border: 1px solid #555; }
-body.dark .container { background: #1e1e1e; color: #ddd; }
 body.dark .footer { background: #111; color: #ddd; }
 body.dark .footer a { color: #bbb; }
 body.dark .footer a:hover { color: #fff; }

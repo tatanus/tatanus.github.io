@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HillbillyStorytime - Visitor Info</title>
+  <link rel="stylesheet" href="style.css" />
+  <script src="script.js" defer></script>
+  <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+</head>
+<body>
+  <script>
+    /* Applies the saved theme before first paint. Inline on purpose: script.js
+       is deferred, so it runs after the page has already painted light. */
+    (function () {
+      var dark = localStorage.getItem("darkmode") === "true";
+      if (dark) document.body.classList.add("dark");
+      var light = document.getElementById("prism-theme-light"),
+          night = document.getElementById("prism-theme-dark");
+      if (light && night) { light.disabled = dark; night.disabled = !dark; }
+    })();
+  </script>
+  <a class="skip-link" href="#main">Skip to content</a>
+  <div id="navbar"></div>
+
+  <main class="container" id="main">
+    <h1>Visitor Diagnostics</h1>
+    <p class="note">
+      This page shows what your browser exposes to a typical website. Nothing here is
+      stored or logged by this site, but the network section makes live requests to
+      <code>api.ipify.org</code> and <code>ipapi.co</code> to resolve your IP — those are
+      third parties with their own logging and privacy policies.
+      Some fields may appear as <em>Unavailable</em> if your browser blocks them.
+    </p>
+
+    <div class="toolbar">
+      <button id="refreshBtn">Refresh Info</button>
+      <button id="geoBtn">Request Browser Geolocation</button>
+      <button id="expandAllBtn">Expand All</button>
+      <button id="collapseAllBtn">Collapse All</button>
+      <label for="timeoutInput">Timeout (ms):</label>
+      <input type="number" id="timeoutInput" value="2000" min="500" step="500" />
+      <span class="badge" id="tsBadge">—</span>
+    </div>
+
+    <div id="results"></div>
+
+    <h2>Raw JSON Dump</h2>
+    <pre id="raw-json" class="raw">waiting…</pre>
+    <p class="muted">
+      IP uses <code>api.ipify.org</code>, IP→Geo uses <code>ipapi.co</code>.
+      Many features are restricted by modern privacy controls.
+    </p>
+  </main>
+
+  <div id="footer"></div>
+
+  <script>
+    // ---------- Helpers ----------
+    const el = id => document.getElementById(id);
+    const nowISO = () => new Date().toISOString();
+    function hashString(s){let h=0;for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}return h.toString();}
+    function getTimeout(){const v=parseInt(el("timeoutInput").value,10);return isNaN(v)||v<500?2000:v;}
+    function withTimeout(promise, ms, fallback="Timeout"){return Promise.race([promise,new Promise(res=>setTimeout(()=>res(fallback),ms))]);}
+
+    // Everything rendered below is interpolated into innerHTML, and some of it
+    // (the ipapi.co geo payload) is third-party controlled. Escape all of it.
+    const ESC_MAP = {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"};
+    function esc(v){return String(v).replace(/[&<>"']/g, c => ESC_MAP[c]);}
+
+    // Pretty print & highlight
+    function renderValue(v) {
+      if (v === null || v === undefined) return "<span class='highlight-empty'>—</span>";
+      if (typeof v === "string" || typeof v === "number" || typeof v === "boolean") {
+        if (v === "Timeout" || v === "Timeout/Blocked") return `<span class='highlight-timeout'>${esc(v)}</span>`;
+        if (v === "Unavailable") return `<span class='highlight-unavail'>${esc(v)}</span>`;
+        return esc(v);
+      }
+      if (Array.isArray(v)) {
+        if (!v.length) return "<span class='highlight-empty'>[]</span>";
+        if (typeof v[0] === "object") {
+          let html = "<table class='info-table sub'><thead><tr>";
+          Object.keys(v[0]).forEach(k=>{html+=`<th>${esc(k)}</th>`;});
+          html+="</tr></thead><tbody>";
+          v.forEach(item=>{
+            html+="<tr>";
+            Object.values(item).forEach(val=>{html+=`<td>${renderValue(val)}</td>`;});
+            html+="</tr>";
+          });
+          html+="</tbody></table>";
+          return html;
+        }
+        return v.map(renderValue).join(", ");
+      }
+      if (typeof v === "object") {
+        let html = "<table class='info-table sub'>";
+        for (const [k,val] of Object.entries(v)) {
+          html += `<tr><td class="key">${esc(k)}</td><td>${renderValue(val)}</td></tr>`;
+        }
+        html += "</table>";
+        return html;
+      }
+      return esc(v);
+    }
+
+    // Collapsible sections with copy button
+    function createSection(title,dataObj,startCollapsed=true){
+      const section=document.createElement("div");
+      section.className="info-section"+(startCollapsed?" collapsed":"");
+      const header=document.createElement("div");header.className="info-header";
+      const h2=document.createElement("h2");h2.textContent=title;
+      const actions=document.createElement("div");actions.className="header-actions";
+      const toggle=document.createElement("span");toggle.className="toggle";toggle.textContent=startCollapsed?"[Show]":"[Hide]";
+      const copy=document.createElement("button");copy.textContent="Copy";copy.className="copy-btn";
+      copy.addEventListener("click",e=>{e.stopPropagation();navigator.clipboard.writeText(JSON.stringify(dataObj,null,2));copy.textContent="Copied!";setTimeout(()=>copy.textContent="Copy",1500);});
+      actions.appendChild(toggle);actions.appendChild(copy);
+      header.appendChild(h2);header.appendChild(actions);
+      const content=document.createElement("div");content.className="info-content";
+      const table=document.createElement("table");table.className="info-table";
+      Object.entries(dataObj||{}).forEach(([k,v])=>{
+        const row=document.createElement("tr");
+        row.innerHTML=`<td class="key">${esc(k)}</td><td>${renderValue(v)}</td>`;
+        table.appendChild(row);
+      });
+      content.appendChild(table);section.appendChild(header);section.appendChild(content);
+      header.addEventListener("click",ev=>{if(ev.target===copy)return;section.classList.toggle("collapsed");toggle.textContent=section.classList.contains("collapsed")?"[Show]":"[Hide]";});
+      return section;
+    }
+    function setAllSections(collapsed){document.querySelectorAll(".info-section").forEach(sec=>{if(collapsed)sec.classList.add("collapsed");else sec.classList.remove("collapsed");const t=sec.querySelector(".toggle");if(t)t.textContent=collapsed?"[Show]":"[Hide]";});}
+
+    // ---------- Probes ----------
+    async function fetchIPInfo(){try{const ip=await fetch("https://api.ipify.org?format=json").then(r=>r.json());const geo=await fetch("https://ipapi.co/json/").then(r=>r.json());return{ip:ip?.ip||"N/A",geo:geo||{}};}catch{return{ip:"N/A",geo:{}};}}
+    function getLocalIPs(){return new Promise(resolve=>{const ips=new Set();try{const rtc=new RTCPeerConnection({iceServers:[]});rtc.createDataChannel("");rtc.onicecandidate=e=>{if(e?.candidate?.candidate){const m=e.candidate.candidate.match(/([0-9]{1,3}(?:\.[0-9]{1,3}){3})/);if(m)ips.add(m[1]);}};rtc.createOffer().then(o=>rtc.setLocalDescription(o));setTimeout(()=>{rtc.close();resolve([...ips]);},500);}catch{resolve([]);}});}
+    function getCanvasFingerprint(){try{const c=document.createElement("canvas"),ctx=c.getContext("2d");ctx.textBaseline="top";ctx.font="16px Arial";ctx.fillText("visitor-diagnostic",2,2);const data=c.toDataURL();return{hash:hashString(data),sample:data.slice(0,64)+"..."};}catch{return"Unavailable";}}
+    async function getAudioFingerprint(){try{const Ctx=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!Ctx)return"Unavailable";const ctx=new Ctx(1,44100,44100);const osc=ctx.createOscillator();osc.type="triangle";osc.frequency.value=1000;const comp=ctx.createDynamicsCompressor();osc.connect(comp);comp.connect(ctx.destination);osc.start(0);osc.stop(0.5);const buf=await ctx.startRendering();let h=0;const d=buf.getChannelData(0);for(let i=0;i<d.length;i+=100){h=((h<<5)-h)+Math.round(d[i]*1000);h|=0;}return h.toString();}catch{return"Unavailable";}}
+    function detectFonts(){try{const base=["monospace","sans-serif","serif"];const test=["Arial","Verdana","Times New Roman","Courier New","Georgia","Trebuchet MS","Roboto","Consolas"];const span=document.createElement("span");span.style.position="absolute";span.style.left="-9999px";span.style.fontSize="72px";span.innerHTML="mmmmmmmmmmlliWWWWW1234567890";document.body.appendChild(span);const baseDims={};base.forEach(b=>{span.style.fontFamily=b;baseDims[b]={w:span.offsetWidth,h:span.offsetHeight};});const det=[];test.forEach(f=>{let pres=false;base.forEach(b=>{span.style.fontFamily=`'${f}',${b}`;if(span.offsetWidth!==baseDims[b].w||span.offsetHeight!==baseDims[b].h)pres=true;});if(pres)det.push(f);});document.body.removeChild(span);return det;}catch{return"Unavailable";}}
+    async function getPermissions(){if(!navigator.permissions?.query)return"Unavailable";const names=["geolocation","notifications","camera","microphone","clipboard-read","clipboard-write"];const out=[];for(const n of names){try{const st=await navigator.permissions.query({name:n});out.push({name:n,state:st?.state||"N/A"});}catch{out.push({name:n,state:"N/A"});}}return out;}
+    async function listMediaDevices(){try{if(!navigator.mediaDevices?.enumerateDevices)return"Unavailable";const devs=await navigator.mediaDevices.enumerateDevices();return devs.map(d=>({kind:d.kind,label:d.label||"(hidden until granted)",deviceId:d.deviceId,groupId:d.groupId||""}));}catch{return"Unavailable";}}
+    function getWebGLInfo(){try{const c=document.createElement("canvas"),gl=c.getContext("webgl");if(!gl)return"Unavailable";const dbg=gl.getExtension("WEBGL_debug_renderer_info");return{vendor:dbg?gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL):gl.getParameter(gl.VENDOR),renderer:dbg?gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)};}catch{return"Unavailable";}}
+    async function getBatteryInfo(){try{if(!navigator.getBattery)return"Unavailable";const b=await navigator.getBattery();return{charging:b.charging,level:b.level};}catch{return"Unavailable";}}
+    async function getStorageInfo(){try{return await navigator.storage?.estimate?.()||"Unavailable";}catch{return"Unavailable";}}
+    async function getUAHints(){try{const uad=navigator.userAgentData;if(!uad?.getHighEntropyValues)return null;const vals=await uad.getHighEntropyValues(["architecture","bitness","model","platform","platformVersion","uaFullVersion","fullVersionList"]);return vals;}catch{return null;}}
+    function getGamepads(){try{const gps=navigator.getGamepads?.()||[];return Array.from(gps).filter(Boolean).map(g=>({id:g.id,index:g.index,axes:g.axes.length,buttons:g.buttons.length}));}catch{return"Unavailable";}}
+    async function getPWAStatus(){return{displayModeStandalone:window.matchMedia?.("(display-mode: standalone)")?.matches||false,serviceWorker:"serviceWorker" in navigator};}
+    function getMediaPreferences(){const q=m=>window.matchMedia&&window.matchMedia(m).matches;return{colorScheme:q("(prefers-color-scheme: dark)")?"dark":(q("(prefers-color-scheme: light)")?"light":"no-preference"),reducedMotion:q("(prefers-reduced-motion: reduce)")?"reduce":"no-preference"};}
+    function getPerformanceInfo(){return{tz:Intl.DateTimeFormat().resolvedOptions().timeZone,offset:new Date().getTimezoneOffset()};}
+    function getVoicesOnce(timeoutMs=800){return new Promise(resolve=>{if(!window.speechSynthesis)return resolve("Unavailable");const vs=window.speechSynthesis.getVoices();if(vs.length)return resolve(vs.map(v=>({name:v.name,lang:v.lang})));const timer=setTimeout(()=>{const v=window.speechSynthesis.getVoices()||[];resolve(v.map(v=>({name:v.name,lang:v.lang})));},timeoutMs);window.speechSynthesis.onvoiceschanged=()=>{clearTimeout(timer);const v=window.speechSynthesis.getVoices()||[];resolve(v.map(v=>({name:v.name,lang:v.lang})));};});}
+
+    // ---------- Gather ----------
+    async function gatherInfo(includeGeo=false){
+      const ts=nowISO();const t=getTimeout();
+      const ipInfo=await withTimeout(fetchIPInfo(),t,{ip:"Timeout",geo:{}});
+      const [localIPs,audioFP,voices,mediaDevices,perms,batt,storage,uah]=await Promise.all([
+        withTimeout(getLocalIPs(),t,[]),
+        withTimeout(getAudioFingerprint(),t,"Timeout"),
+        withTimeout(getVoicesOnce(),t,"Timeout"),
+        withTimeout(listMediaDevices(),t,"Timeout"),
+        withTimeout(getPermissions(),t,"Timeout"),
+        withTimeout(getBatteryInfo(),t,"Timeout"),
+        withTimeout(getStorageInfo(),t,"Timeout"),
+        withTimeout(getUAHints(),t,null)
+      ]);
+      const info={};
+      info["Basic Info"]={Timestamp:ts,"User Agent":navigator.userAgent,"UA-CH":uah,Platform:navigator.platform,Languages:navigator.languages};
+      info["Network"]={"External IP":ipInfo.ip,"IP Geo":ipInfo.geo,"Local IPs":localIPs};
+      if(includeGeo) info["Browser Geolocation"]="(requested)";
+      info["Screen"]={"Resolution":`${screen.width}x${screen.height}`,"Inner":`${innerWidth}x${innerHeight}`,"PixelRatio":devicePixelRatio};
+      info["WebGL"]=getWebGLInfo();
+      info["Canvas Fingerprint"]=getCanvasFingerprint();
+      info["Audio Fingerprint"]=audioFP;
+      info["Fonts"]=detectFonts();
+      info["Permissions"]=perms;
+      info["Battery"]=batt;
+      info["Media Devices"]=mediaDevices;
+      info["Performance"]=getPerformanceInfo();
+      info["Storage"]=storage;
+      info["Voices"]=voices;
+      info["Gamepads"]=getGamepads();
+      info["Media Preferences"]=getMediaPreferences();
+      info["PWA"]=await withTimeout(getPWAStatus(),t,"Timeout");
+      return info;
+    }
+
+    // ---------- Render ----------
+    function renderInfo(info){
+      const c=el("results");c.innerHTML="";
+      for(const [s,d] of Object.entries(info)){c.appendChild(createSection(s,d,true));}
+      el("raw-json").textContent=JSON.stringify(info,null,2);
+      el("tsBadge").textContent="Last collected: "+nowISO()+` (Timeout=${getTimeout()}ms)`;
+    }
+    async function refresh(includeGeo=false){el("raw-json").textContent="collecting…";const info=await gatherInfo(includeGeo);renderInfo(info);}
+    el("refreshBtn").addEventListener("click",()=>refresh(false));
+    el("geoBtn").addEventListener("click",()=>refresh(true));
+    el("expandAllBtn").addEventListener("click",()=>setAllSections(false));
+    el("collapseAllBtn").addEventListener("click",()=>setAllSections(true));
+    refresh(false);
+  </script>
+</body>
+</html>
